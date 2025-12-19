@@ -4,6 +4,7 @@ import { BiSearch } from "react-icons/bi";
 import css from "./Layout.module.css";
 import Sidebar from "./Sidebar/Sidebar";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+
 const Layout = () => {
   const { pathname } = useLocation();
   return (
@@ -27,11 +28,11 @@ const Layout = () => {
             <input type="text" placeholder="Enter here" />
           </div>
           <div className={css.profile}>
-            <img src="./profile.jpg" alt="" />
+<img src="/profile.jpg" alt="Profile" />
 
             <div className={css.details}>
-              <span>Arfain Saba</span>
-              <span>arfainsabasaba@gmail.com</span>
+              <span>Shubham Kandpal</span>
+              <span>shubhamkandpal@gmail.com</span>
             </div>
           </div>
         </div>
