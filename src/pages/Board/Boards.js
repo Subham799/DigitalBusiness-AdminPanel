@@ -1,130 +1,142 @@
-import Board, {
-  moveCard,
-  moveColumn,
-  removeCard,
-  addCard,
-} from "@asseinfo/react-kanban";
-import "@asseinfo/react-kanban/dist/styles.css";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { useState } from "react";
 import useBoard from "../../store/Board";
 import "./Board.css";
 import { RxCross2 } from "react-icons/rx";
 import { IoMdAdd } from "react-icons/io";
 import AddCardModal from "../../Components/AddCardModal/AddCardModal";
-import { useState } from "react";
 
 const Boards = () => {
-  const [modalOpened, setModalOpened] = useState(false);
   const { board, setBoard } = useBoard();
+  const [modalOpened, setModalOpened] = useState(false);
+  const [activeColumn, setActiveColumn] = useState(null);
 
-  const handleColumnMove = (_card, source, destination) => {
-    const updatedBoard = moveColumn(board, source, destination);
-    setBoard(updatedBoard);
+  // 🎯 Drag logic
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+
+    const { source, destination } = result;
+
+    const sourceItems = [...board[source.droppableId]];
+    const destItems = [...board[destination.droppableId]];
+
+    const [movedItem] = sourceItems.splice(source.index, 1);
+    destItems.splice(destination.index, 0, movedItem);
+
+    setBoard({
+      ...board,
+      [source.droppableId]: sourceItems,
+      [destination.droppableId]: destItems,
+    });
   };
 
-  const handleCardMove = (_card, source, destination) => {
-    const updatedBoard = moveCard(board, source, destination);
-    setBoard(updatedBoard);
+  // 🎯 Gradient logic (same as before)
+  const getGradient = (column) => {
+    if (column === "TODO")
+      return { background: "linear-gradient(65deg,#414141,#30bddc)" };
+    if (column === "Doing")
+      return { background: "linear-gradient(65deg,#414141,#dc3030)" };
+    if (column === "Completed")
+      return { background: "linear-gradient(65deg,#414141,#30dc56)" };
+    if (column === "Backlog")
+      return { background: "linear-gradient(65deg,#414141,#8630dc)" };
   };
 
-  const getColumn = (card) => {
-    const column = board.columns.filter((column) =>
-      column.cards.includes(card)
-    );
-    return column[0];
+  // 🎯 Add card
+  const handleCardAdd = (title, description) => {
+    const newCard = {
+      id: Date.now().toString(),
+      title,
+      description,
+    };
+
+    setBoard({
+      ...board,
+      [activeColumn]: [...board[activeColumn], newCard],
+    });
+
+    setModalOpened(false);
   };
 
-  const getGradient = (card) => {
-    const column = getColumn(card);
-    const title = column.title;
-    if (title === "TODO") {
-      return {
-        background:
-          "linear-gradient(65.35deg, rgba(65, 65, 65, 0.67) -1.72%, rgba(48, 189, 220) 163.54%)",
-      };
-    } else if (title === "Doing") {
-      return {
-        background:
-          "linear-gradient(65.35deg, rgba(65, 65, 65, 0.67) -1.72%, rgba(220, 48, 48) 163.54%)",
-      };
-    } else if (title === "Completed") {
-      return {
-        background:
-          "linear-gradient(65.35deg, rgba(65, 65, 65, 0.67) -1.72%, rgba(48, 220, 86) 163.54%)",
-      };
-    } else if (title === "Backlog") {
-      return {
-        background:
-          "linear-gradient(65.35deg, rgba(65, 65,65, 0.67) -1.72%,rgba(134, 48, 220) 163.54%)",
-      };
-    }
+  // 🎯 Remove card
+  const removeCard = (column, index) => {
+    const updated = [...board[column]];
+    updated.splice(index, 1);
+
+    setBoard({
+      ...board,
+      [column]: updated,
+    });
   };
 
   return (
     <div className="board-container">
       <span>Trello Board</span>
 
-      <Board
-        allowAddColumn
-        allowRenameColumn
-        allowRemoveCard
-        onCardDragEnd={handleCardMove}
-        onColumnDragEnd={handleColumnMove}
-        renderCard={(props) => (
-          <div className="kanban-card" style={getGradient(props)}>
-            <div>
-              <span>{props.title}</span>
-              <button
-                className="remove-button"
-                type="button"
-                onClick={() => {
-                  const updatedBoard = removeCard(
-                    board,
-                    getColumn(props),
-                    props
-                  );
-                  setBoard(updatedBoard);
-                }}
-              >
-                <RxCross2 color="white" size={15} />
-              </button>
-            </div>
-            <span>{props.description}</span>
-          </div>
-        )}
-        renderColumnHeader={(props) => {
-          const handleCardAdd = (title, detail) => {
-            const card = {
-              id: new Date().getTime(),
-              title,
-              description: detail,
-            };
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className="kanban-columns">
+          {Object.entries(board).map(([column, cards]) => (
+            <Droppable droppableId={column} key={column}>
+              {(provided) => (
+                <div
+                  className="kanban-column"
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                >
+                  {/* COLUMN HEADER */}
+                  <div className="column-header">
+                    <span>{column}</span>
+                    <IoMdAdd
+                      size={22}
+                      onClick={() => {
+                        setActiveColumn(column);
+                        setModalOpened(true);
+                      }}
+                    />
+                  </div>
 
-            const updatedBoard = addCard(board, props, card);
-            setBoard(updatedBoard);
-            setModalOpened(false);
-          };
+                  {/* CARDS */}
+                  {cards.map((card, index) => (
+                    <Draggable
+                      draggableId={card.id}
+                      index={index}
+                      key={card.id}
+                    >
+                      {(provided) => (
+                        <div
+                          className="kanban-card"
+                          style={getGradient(column)}
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                        >
+                          <div className="card-header">
+                            <span>{card.title}</span>
+                            <button
+                              onClick={() => removeCard(column, index)}
+                            >
+                              <RxCross2 color="white" />
+                            </button>
+                          </div>
+                          <span>{card.description}</span>
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
 
-          return (
-            <div className="column-header">
-              <span>{props.title}</span>
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          ))}
+        </div>
+      </DragDropContext>
 
-              <IoMdAdd
-                color="white"
-                size={25}
-                title="Add card"
-                onClick={() => setModalOpened(true)}
-              />
-              <AddCardModal
-                visible={modalOpened}
-                handleCardAdd={handleCardAdd}
-                onClose={() => setModalOpened(false)}
-              />
-            </div>
-          );
-        }}
-      >
-        {board}
-      </Board>
+      <AddCardModal
+        visible={modalOpened}
+        handleCardAdd={handleCardAdd}
+        onClose={() => setModalOpened(false)}
+      />
     </div>
   );
 };
