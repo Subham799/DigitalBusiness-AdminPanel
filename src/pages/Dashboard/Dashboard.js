@@ -4,11 +4,11 @@ import Statistics from "../../Components/Statistics/Statistics";
 import Orders from "../../Components/Orders/Orders";
 import {
   cardsData,
-  ordersData,
+ 
   groupNumber,
-  INITIAL_EVENTS,
-  userData,
-  boardData,
+
+
+  
 } from "../../data/data";
 
 const Dashboard = () => {

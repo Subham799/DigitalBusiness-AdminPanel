@@ -78,13 +78,13 @@ const DataGrid = () => {
       accessorKey: "state",
       header: "State",
     },
-  ]);
+  ],[]);
   const theme = useMemo(() =>
     createTheme({
       palette: {
         mode: "dark",
       },
-    })
+    }),[]
   );
 
   return (

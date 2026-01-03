@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { groupNumber, INITIAL_EVENTS, userData, boardData } from "../data/data";
+import {  INITIAL_EVENTS, } from "../data/data";
 
 const useCalender = create((set) => ({
   currentEvents: INITIAL_EVENTS,
